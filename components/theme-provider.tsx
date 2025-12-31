@@ -17,7 +17,7 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-  theme: "light",
+  theme: "dark",
   setTheme: () => null,
   toggleTheme: () => null,
 };
@@ -27,7 +27,7 @@ const ThemeProviderContext =
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
   storageKey = "moodemy-theme",
   ...props
 }: ThemeProviderProps) {
