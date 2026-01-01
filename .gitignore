@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Extras
+FIREBASE_SETUP_GUIDE.md
+PROJECT_STRUCTURE.md
+updates.md

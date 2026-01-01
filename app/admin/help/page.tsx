@@ -1,23 +1,18 @@
-'use client';
-
 import { AdminLayout } from '@/components/admin-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useState } from 'react';
+import { FirebaseFirestoreService } from '@/lib/firebase-firestore';
+import { getServerSession } from '@/lib/session';
+import { HelpSupportEditor } from './help-support-editor';
 
-export default function AboutPage() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [aboutText, setAboutText] = useState(
-    'Welcome to MoodyMe! We are a platform dedicated to helping you track and understand your mood patterns. Our mission is to provide you with insights into your emotional well-being and help you lead a healthier, more balanced life.'
-  );
+export default async function HelpPage() {
+  // Verify user is authenticated and is admin
+  const session = await getServerSession();
+  
+  if (!session || session.user.role !== 'ADMIN') {
+    throw new Error('Unauthorized access');
+  }
 
-  const handleSave = () => {
-    // TODO: Save to database
-    console.log('Saving about text:', aboutText);
-    setIsEditing(false);
-  };
-
+  // Fetch help support content from Firebase
+  const helpContent = await FirebaseFirestoreService.getContentByDocName('help_support');
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -27,38 +22,10 @@ export default function AboutPage() {
             <h1 className="text-3xl font-bold tracking-tight">Help & Support</h1>
             <p className="text-muted-foreground">Manage your application's help page content</p>
           </div>
-          <Button onClick={() => setIsEditing(!isEditing)}>
-            {isEditing ? 'Cancel' : 'Edit'}
-          </Button>
         </div>
 
-        {/* About Content Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>About MoodyMe</CardTitle>
-            <CardDescription>Your application description and mission</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isEditing ? (
-              <>
-                <Textarea
-                  value={aboutText}
-                  onChange={(e) => setAboutText(e.target.value)}
-                  placeholder="Enter about text..."
-                  className="min-h-[200px]"
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave}>Save Changes</Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground leading-relaxed">{aboutText}</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Help Content Editor */}
+        <HelpSupportEditor initialContent={helpContent} />
 
         {/* Stats Section */}
         {/* <div className="grid gap-4 md:grid-cols-3">

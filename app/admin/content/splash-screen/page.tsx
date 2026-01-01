@@ -1,86 +1,32 @@
-"use client";
-
 import { AdminLayout } from "@/components/admin-layout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { FirebaseFirestoreService } from "@/lib/firebase-firestore";
+import { getServerSession } from "@/lib/session";
+import { SplashScreenEditor } from "./splash-screen-editor";
 
-export default function SplashScreenPage() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [content, setContent] = useState(
-    "Understand Your Mood, Improve Your Life. Welcome to MoodyMe - Your Personal Mood Tracking Companion. Track daily moods, discover patterns, and gain insights into your emotional well-being."
-  );
+export default async function SplashScreenPage() {
+  // Verify user is authenticated and is admin
+  const session = await getServerSession();
+  
+  if (!session || session.user.role !== 'ADMIN') {
+    throw new Error('Unauthorized access');
+  }
 
-  const handleSave = () => {
-    console.log("Saving splash screen content:", content);
-    setIsEditing(false);
-  };
+  // Fetch splash screen content from Firebase
+  const splashScreenContent = await FirebaseFirestoreService.getContentByDocName('splash_screen');
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Splash Screen</h1>
-            <p className="text-muted-foreground">
-              Manage the splash screen welcome message
-            </p>
-          </div>
-          <Button onClick={() => setIsEditing(!isEditing)}>
-            {isEditing ? "Cancel" : "Edit"}
-          </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Splash Screen Content</h1>
+          <p className="text-muted-foreground">
+            Manage the content displayed on your app's splash screen
+          </p>
         </div>
 
-        {/* Content Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Splash Screen Message</CardTitle>
-            <CardDescription>
-              This message is displayed when the app first loads
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isEditing ? (
-              <>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Enter splash screen message..."
-                  className="min-h-[150px]"
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave}>Save Changes</Button>
-                </div>
-              </>
-            ) : (
-              <div>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                  {content}
-                </p>
-                <div className="bg-muted p-4 rounded-lg border-2 border-dashed">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    Splash Preview:
-                  </p>
-                  <div className="bg-background p-6 rounded text-center">
-                    <div className="text-2xl font-bold mb-2">🎯</div>
-                    <p className="text-sm font-semibold">{content}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Splash Screen Editor */}
+        <SplashScreenEditor initialContent={splashScreenContent} />
 
         {/* Info Cards */}
         {/* <div className="grid gap-4 md:grid-cols-2">

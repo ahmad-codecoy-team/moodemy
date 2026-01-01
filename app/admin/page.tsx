@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin-layout";
 import {
   Card,
@@ -17,88 +14,52 @@ import {
   FileText,
   Activity,
 } from "lucide-react";
+import type { DashboardStats, StatCard, RecentUser } from "@/types";
+import { FirebaseAuthService } from "@/lib/firebase-auth";
+import { FirebaseFirestoreService } from "@/lib/firebase-firestore";
+import { getServerSession } from "@/lib/session";
 
-interface Stats {
-  totalUsers: number;
-  activeUsers: number;
-  inactiveUsers: number;
-  totalBanners: number;
-  activeBanners: number;
-  contentCount: number;
-}
+export default async function AdminDashboard() {
+  // Verify user is authenticated and is admin
+  const session = await getServerSession();
 
-interface RecentUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  createdAt: string;
-  isActive: boolean;
-}
+  if (!session || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized access");
+  }
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({
-    totalUsers: 0,
-    activeUsers: 0,
-    inactiveUsers: 0,
-    totalBanners: 0,
-    activeBanners: 0,
-    contentCount: 0,
-  });
-  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([
-    {
-      id: "1",
-      email: "john.doe@example.com",
-      firstName: "John",
-      lastName: "Doe",
-      createdAt: "2023-10-01T00:00:00Z",
-      isActive: true,
-    },
-    {
-      id: "2",
-      email: "jane.smith@example.com",
-      firstName: "Jane",
-      lastName: "Smith",
-      createdAt: "2023-10-02T00:00:00Z",
-      isActive: false,
-    },
-    {
-      id: "3",
-      email: "alice.johnson@example.com",
-      firstName: "Alice",
-      lastName: "Johnson",
-      createdAt: "2023-10-03T00:00:00Z",
-      isActive: true,
-    },
+  // Fetch real data from Firebase
+  const [usersData, contentData] = await Promise.all([
+    FirebaseAuthService.listUsers(1000), // Get up to 1000 users
+    FirebaseFirestoreService.getContent(),
   ]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const token = localStorage.getItem("admin_token");
-      const response = await fetch("/api/admin/stats", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
-        setRecentUsers(data.recentUsers);
-      }
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    } finally {
-      setLoading(false);
-    }
+  // Calculate real stats
+  const stats: DashboardStats = {
+    totalUsers: usersData.users.length,
+    activeUsers: usersData.users.filter((user) => user.isActive).length,
+    inactiveUsers: usersData.users.filter((user) => !user.isActive).length,
+    totalBanners: 0, // You can implement banner collection later
+    activeBanners: 0, // You can implement banner collection later
+    contentCount: contentData.length,
   };
 
-  const statCards = [
+  // Get recent users (last 10)
+  const recentUsers: RecentUser[] = usersData.users
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 10)
+    .map((user) => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      createdAt: user.createdAt,
+      isActive: user.isActive,
+    }));
+
+  const statCards: StatCard[] = [
     {
       title: "Total Users",
       value: stats.totalUsers,
@@ -140,19 +101,6 @@ export default function AdminDashboard() {
     //   bg: 'bg-pink-50 dark:bg-pink-950/30',
     // },
   ];
-
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <Activity className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-            <p className="text-muted-foreground">Loading dashboard...</p>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
     <AdminLayout>
