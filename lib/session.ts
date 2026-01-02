@@ -1,8 +1,8 @@
-import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
-import type { User, AuthTokenClaims } from '@/types';
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+import type { User, AuthTokenClaims } from "@/types";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 export interface SessionData {
   user: User;
@@ -23,7 +23,7 @@ export function createSessionToken(user: User): string {
     },
     JWT_SECRET,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     }
   );
 }
@@ -35,7 +35,7 @@ export function verifySessionToken(token: string): AuthTokenClaims | null {
   try {
     return jwt.verify(token, JWT_SECRET) as AuthTokenClaims;
   } catch (error) {
-    console.error('Token verification failed:', error);
+    console.error("Token verification failed:", error);
     return null;
   }
 }
@@ -44,8 +44,8 @@ export function verifySessionToken(token: string): AuthTokenClaims | null {
  * Get session from cookies (server-side)
  */
 export async function getServerSession(): Promise<SessionData | null> {
-  const cookieStore = cookies();
-  const token = cookieStore.get('admin_token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_token")?.value;
 
   if (!token) {
     return null;
@@ -64,7 +64,7 @@ export async function getServerSession(): Promise<SessionData | null> {
       lastName: decoded.lastName,
       role: decoded.role,
       isActive: true,
-      createdAt: '',
+      createdAt: "",
     },
     token,
   };
@@ -74,12 +74,15 @@ export async function getServerSession(): Promise<SessionData | null> {
  * Set session cookie (client-side helper)
  */
 export function setSessionCookie(token: string) {
-  document.cookie = `admin_token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`;
+  document.cookie = `admin_token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${
+    7 * 24 * 60 * 60
+  }`;
 }
 
 /**
  * Clear session cookie
  */
 export function clearSessionCookie() {
-  document.cookie = 'admin_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  document.cookie =
+    "admin_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
 }

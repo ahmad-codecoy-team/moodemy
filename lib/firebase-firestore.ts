@@ -9,9 +9,6 @@ import type {
   CombinedUser,
 } from "@/types";
 
-interface FirebaseAuthUser extends User {
-  [key: string]: unknown;
-}
 
 export class FirebaseFirestoreService {
   private static db = firestore;
@@ -263,7 +260,7 @@ export class FirebaseFirestoreService {
       return {
         id: doc.id,
         ...doc.data(),
-      } as UserProfile;
+      } as UserProfile & { id: string };
     } catch (error) {
       console.error("Error getting user profile:", error);
       return null;
@@ -299,7 +296,7 @@ export class FirebaseFirestoreService {
           ({
             id: doc.id,
             ...doc.data(),
-          } as UserProfile)
+          } as UserProfile & { id: string })
       );
     } catch (error) {
       console.error("Error getting all user profiles:", error);
@@ -312,7 +309,7 @@ export class FirebaseFirestoreService {
    */
 
   // Get combined user data from both Auth and Firestore
-  static async getCombinedUserData(authUsers: FirebaseAuthUser[]): Promise<CombinedUser[]> {
+  static async getCombinedUserData(authUsers: User[]): Promise<CombinedUser[]> {
     try {
       // Get all user profiles from Firestore
       const userProfiles = await this.getAllUserProfiles();
@@ -327,12 +324,15 @@ export class FirebaseFirestoreService {
       );
 
       // Combine auth data with Firestore data
-      const combinedUsers = authUsers.map((authUser) => {
-        const profile = profilesMap.get(authUser.uid);
+      const combinedUsers = authUsers
+        .filter((authUser) => authUser.uid || authUser.id) // Ensure we have a valid identifier
+        .map((authUser) => {
+        const uid = authUser.uid || authUser.id;
+        const profile = profilesMap.get(uid);
 
         const result = {
           // Auth data (includes disabled status, etc.)
-          uid: authUser.uid,
+          uid: uid,
           email: authUser.email,
           disabled: authUser.disabled || false,
           emailVerified: authUser.emailVerified || false,
@@ -343,7 +343,7 @@ export class FirebaseFirestoreService {
           // Firestore data (takes precedence for names)
           firstName: profile?.firstName || authUser.firstName || "",
           lastName: profile?.lastName || authUser.lastName || "",
-          profileCreatedAt: profile?.createdAt || null,
+          profileCreatedAt: profile?.createdAt || undefined,
 
           // Computed fields
           isActive: !(authUser.disabled || false),

@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 
 import { UserX, UserCheck, Users } from "lucide-react";
-import type { User } from "@/types";
 import { FirebaseAuthService } from "@/lib/firebase-auth";
 import { FirebaseFirestoreService } from "@/lib/firebase-firestore";
 import { getServerSession } from "@/lib/session";
@@ -31,7 +30,7 @@ export default async function UsersPage({
 
   // Combine Auth data with Firestore users collection data
   let users = await FirebaseFirestoreService.getCombinedUserData(
-    usersData.users as any[]
+    usersData.users
   );
 
   // Filter out admin users (don't show current admin or other admins in the users list)

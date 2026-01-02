@@ -1,4 +1,4 @@
-export type UserRole = 'USER' | 'ADMIN';
+export type UserRole = "USER" | "ADMIN";
 
 export interface User {
   id: string;
@@ -9,7 +9,7 @@ export interface User {
   isActive: boolean;
   disabled?: boolean; // Add disabled field from Auth
   emailVerified?: boolean; // Add emailVerified field from Auth
-  role: UserRole;
+  role: string;
   createdAt: string;
 }
 

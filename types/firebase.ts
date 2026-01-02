@@ -1,6 +1,7 @@
 // Firebase specific types
 
 export interface UserProfile {
+  id?: string;
   uid: string;
   email: string;
   firstName: string;
