@@ -1,90 +1,81 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
-import type { User } from "@/types";
+import { Pagination } from "@/components/ui/pagination";
+import { Search, UserCheck, UserX } from "lucide-react";
+import type { CombinedUser } from "@/types";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-interface UserManagementProps {
-  users: User[];
-  searchTerm?: string;
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalUsers: number;
+  itemsPerPage: number;
 }
 
-export function UserManagement({ users, searchTerm = "" }: UserManagementProps) {
+interface UserManagementProps {
+  users: CombinedUser[];
+  searchTerm?: string;
+  pagination: PaginationInfo;
+}
+
+export function UserManagement({
+  users,
+  searchTerm = "",
+  pagination,
+}: UserManagementProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState(searchTerm);
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    isActive: true,
-  });
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
     if (searchQuery.trim()) {
-      params.set('search', searchQuery.trim());
+      params.set("search", searchQuery.trim());
     }
+    // Reset to page 1 when searching
+    params.set("page", "1");
     router.push(`/admin/users?${params.toString()}`);
   };
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user);
-    setFormData({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      isActive: user.isActive,
-    });
-    setShowDialog(true);
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams();
+    if (searchTerm) {
+      params.set("search", searchTerm);
+    }
+    params.set("page", page.toString());
+    router.push(`/admin/users?${params.toString()}`);
   };
 
-  const handleCloseDialog = () => {
-    setShowDialog(false);
-    setEditingUser(null);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      isActive: true,
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
+  const handleToggleUserStatus = async (user: CombinedUser) => {
+    const newStatus = !user.isActive;
+    const action = newStatus ? "activate" : "suspend";
+    
+    // Set loading state
+    setLoadingStates(prev => ({ ...prev, [user.uid]: true }));
 
     try {
       // Import and use the server action
-      const { updateUserInfo } = await import('./actions');
-      
-      const result = await updateUserInfo(editingUser.id, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        isActive: formData.isActive,
-      });
+      const { updateUserStatus } = await import("./actions");
+
+      const result = await updateUserStatus(user.uid, newStatus);
 
       if (result.success) {
-        handleCloseDialog();
+        toast.success(`User ${action}d successfully`);
         router.refresh(); // Refresh to get updated data
       } else {
-        console.error("Update failed:", result.error);
-        // You could add toast notification here
+        toast.error(result.error || `Failed to ${action} user`);
       }
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error(`Error ${action}ing user:`, error);
+      toast.error(`Failed to ${action} user`);
+    } finally {
+      // Clear loading state
+      setLoadingStates(prev => ({ ...prev, [user.uid]: false }));
     }
   };
 
@@ -105,12 +96,12 @@ export function UserManagement({ users, searchTerm = "" }: UserManagementProps) 
           Search
         </Button>
         {searchTerm && (
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="ghost"
             onClick={() => {
               setSearchQuery("");
-              router.push('/admin/users');
+              router.push("/admin/users?page=1");
             }}
           >
             Clear
@@ -135,54 +126,82 @@ export function UserManagement({ users, searchTerm = "" }: UserManagementProps) 
             {users.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-gray-500">
-                  {searchTerm ? `No users found matching "${searchTerm}"` : "No users found"}
+                  {searchTerm
+                    ? `No users found matching "${searchTerm}"`
+                    : "No users found"}
                 </td>
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user.id} className="border-b">
+                <tr key={user.uid} className="border-b">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-sm font-medium text-primary">
-                          {user.firstName[0]}
-                          {user.lastName[0]}
+                          {user.firstName?.[0] || user.email?.[0] || '?'}
+                          {user.lastName?.[0] || ''}
                         </span>
                       </div>
                       <span className="font-medium">
-                        {user.firstName} {user.lastName}
+                        {user.fullName || `${user.firstName} ${user.lastName}`.trim() || user.email}
                       </span>
                     </div>
                   </td>
                   <td className="p-4 text-gray-600">{user.email}</td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.role === 'ADMIN' 
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.role === "ADMIN"
+                          ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      }`}
+                    >
                       {user.role}
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      user.isActive
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                    }`}>
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        user.isActive
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      }`}
+                    >
                       {user.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td className="p-4 text-gray-600">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {user.profileCreatedAt 
+                      ? new Date(user.profileCreatedAt).toLocaleDateString()
+                      : user.authData?.metadata?.creationTime 
+                        ? new Date(user.authData.metadata.creationTime).toLocaleDateString()
+                        : 'N/A'
+                    }
                   </td>
                   <td className="p-4">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEditUser(user)}
+                      onClick={() => handleToggleUserStatus(user)}
+                      disabled={loadingStates[user.uid] || false}
+                      className={`flex items-center gap-2 ${
+                        user.isActive
+                          ? "text-red-600 hover:text-red-700 hover:border-red-300"
+                          : "text-green-600 hover:text-green-700 hover:border-green-300"
+                      }`}
                     >
-                      Edit
+                      {loadingStates[user.uid] ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : user.isActive ? (
+                        <UserX className="w-4 h-4" />
+                      ) : (
+                        <UserCheck className="w-4 h-4" />
+                      )}
+                      {loadingStates[user.uid]
+                        ? "Processing..."
+                        : user.isActive
+                        ? "Suspend"
+                        : "Activate"}
                     </Button>
                   </td>
                 </tr>
@@ -192,59 +211,20 @@ export function UserManagement({ users, searchTerm = "" }: UserManagementProps) 
         </table>
       </div>
 
-      {/* Edit User Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
-              Update user information and status.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, lastName: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-                <Label htmlFor="isActive">Active User</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                Cancel
-              </Button>
-              <Button type="submit">Save Changes</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalUsers}
+            itemsPerPage={pagination.itemsPerPage}
+            onPageChange={handlePageChange}
+            showInfo={true}
+            className="border-t pt-4"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { auth } from './firebase-admin';
-import type { CreateUserInput, User } from '@/types';
+import { auth } from "./firebase-admin";
+import type { CreateUserInput, User } from "@/types";
 
 export class FirebaseAuthService {
   /**
@@ -16,7 +16,7 @@ export class FirebaseAuthService {
 
       // Set custom claims for role-based access
       await auth.setCustomUserClaims(userRecord.uid, {
-        role: userData.role || 'USER',
+        role: userData.role || "USER",
         firstName: userData.firstName,
         lastName: userData.lastName,
       });
@@ -27,11 +27,11 @@ export class FirebaseAuthService {
         firstName: userData.firstName,
         lastName: userData.lastName,
         isActive: !userRecord.disabled,
-        role: userData.role || 'USER',
+        role: userData.role || "USER",
         createdAt: userRecord.metadata.creationTime,
       };
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("Error creating user:", error);
       throw error;
     }
   }
@@ -47,14 +47,14 @@ export class FirebaseAuthService {
       return {
         id: userRecord.uid,
         email: userRecord.email!,
-        firstName: customClaims.firstName || '',
-        lastName: customClaims.lastName || '',
+        firstName: customClaims.firstName || "",
+        lastName: customClaims.lastName || "",
         isActive: !userRecord.disabled,
-        role: customClaims.role || 'USER',
+        role: customClaims.role || "USER",
         createdAt: userRecord.metadata.creationTime,
       };
     } catch (error) {
-      console.error('Error getting user:', error);
+      console.error("Error getting user:", error);
       return null;
     }
   }
@@ -70,14 +70,14 @@ export class FirebaseAuthService {
       return {
         id: userRecord.uid,
         email: userRecord.email!,
-        firstName: customClaims.firstName || '',
-        lastName: customClaims.lastName || '',
+        firstName: customClaims.firstName || "",
+        lastName: customClaims.lastName || "",
         isActive: !userRecord.disabled,
-        role: customClaims.role || 'USER',
+        role: customClaims.role || "USER",
         createdAt: userRecord.metadata.creationTime,
       };
     } catch (error) {
-      console.error('Error getting user by email:', error);
+      console.error("Error getting user by email:", error);
       return null;
     }
   }
@@ -91,7 +91,7 @@ export class FirebaseAuthService {
         disabled: !isActive,
       });
     } catch (error) {
-      console.error('Error updating user status:', error);
+      console.error("Error updating user status:", error);
       throw error;
     }
   }
@@ -104,7 +104,7 @@ export class FirebaseAuthService {
       const decodedToken = await auth.verifyIdToken(idToken);
       return decodedToken;
     } catch (error) {
-      console.error('Error verifying ID token:', error);
+      console.error("Error verifying ID token:", error);
       throw error;
     }
   }
@@ -112,11 +112,14 @@ export class FirebaseAuthService {
   /**
    * Create custom token for user
    */
-  static async createCustomToken(uid: string, additionalClaims?: object): Promise<string> {
+  static async createCustomToken(
+    uid: string,
+    additionalClaims?: object
+  ): Promise<string> {
     try {
       return await auth.createCustomToken(uid, additionalClaims);
     } catch (error) {
-      console.error('Error creating custom token:', error);
+      console.error("Error creating custom token:", error);
       throw error;
     }
   }
@@ -124,11 +127,14 @@ export class FirebaseAuthService {
   /**
    * Update user custom claims
    */
-  static async updateUserCustomClaims(uid: string, customClaims: object): Promise<void> {
+  static async updateUserCustomClaims(
+    uid: string,
+    customClaims: object
+  ): Promise<void> {
     try {
       await auth.setCustomUserClaims(uid, customClaims);
     } catch (error) {
-      console.error('Error updating custom claims:', error);
+      console.error("Error updating custom claims:", error);
       throw error;
     }
   }
@@ -140,7 +146,7 @@ export class FirebaseAuthService {
     try {
       await auth.deleteUser(uid);
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting user:", error);
       throw error;
     }
   }
@@ -151,17 +157,20 @@ export class FirebaseAuthService {
   static async listUsers(maxResults: number = 100, pageToken?: string) {
     try {
       const listUsersResult = await auth.listUsers(maxResults, pageToken);
-      
-      const users: User[] = listUsersResult.users.map(userRecord => {
+
+      const users: User[] = listUsersResult.users.map((userRecord) => {
         const customClaims = userRecord.customClaims || {};
-        
+
         return {
           id: userRecord.uid,
-          email: userRecord.email || '',
-          firstName: customClaims.firstName || '',
-          lastName: customClaims.lastName || '',
+          uid: userRecord.uid, // Add uid field for consistency
+          email: userRecord.email || "",
+          firstName: customClaims.firstName || "",
+          lastName: customClaims.lastName || "",
           isActive: !userRecord.disabled,
-          role: customClaims.role || 'USER',
+          disabled: userRecord.disabled || false,
+          emailVerified: userRecord.emailVerified || false,
+          role: customClaims.role || "USER",
           createdAt: userRecord.metadata.creationTime,
         };
       });
@@ -171,7 +180,7 @@ export class FirebaseAuthService {
         pageToken: listUsersResult.pageToken,
       };
     } catch (error) {
-      console.error('Error listing users:', error);
+      console.error("Error listing users:", error);
       throw error;
     }
   }

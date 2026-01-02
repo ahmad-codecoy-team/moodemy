@@ -1,6 +1,10 @@
 // Firebase Client SDK for authentication
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, AuthError } from 'firebase/auth';
+
+interface FirebaseAuthError extends Error {
+  code: string;
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -31,9 +35,10 @@ export class FirebaseClientAuth {
         user,
         idToken,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Firebase sign-in error:', error);
-      throw new Error(this.getAuthErrorMessage(error.code));
+      const authError = error as FirebaseAuthError;
+      throw new Error(this.getAuthErrorMessage(authError.code || 'unknown'));
     }
   }
 

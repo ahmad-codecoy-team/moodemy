@@ -50,9 +50,9 @@ export default function LoginPage() {
       } else {
         setError(data.error || "Login failed");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      setError(error.message || "An error occurred. Please try again.");
+      setError(error instanceof Error ? error.message : "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

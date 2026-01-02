@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
 
   // Fetch real data from Firebase
   const [usersData, contentData] = await Promise.all([
-    FirebaseAuthService.listUsers(1000), // Get up to 1000 users
+    FirebaseAuthService.listUsers(),
     FirebaseFirestoreService.getContent(),
   ]);
 
@@ -85,20 +85,20 @@ export default async function AdminDashboard() {
       bg: "bg-orange-50 dark:bg-orange-950/30",
     },
     // {
-    //   title: 'Active Banners',
+    //   title: "Active Banners",
     //   value: stats.activeBanners,
     //   icon: Image,
     //   description: `${stats.activeBanners} of ${stats.totalBanners} banners`,
-    //   color: 'text-purple-500',
-    //   bg: 'bg-purple-50 dark:bg-purple-950/30',
+    //   color: "text-purple-500",
+    //   bg: "bg-purple-50 dark:bg-purple-950/30",
     // },
     // {
-    //   title: 'Content Pages',
+    //   title: "Content Pages",
     //   value: stats.contentCount,
     //   icon: FileText,
-    //   description: 'Total content items',
-    //   color: 'text-pink-500',
-    //   bg: 'bg-pink-50 dark:bg-pink-950/30',
+    //   description: "Total content items",
+    //   color: "text-pink-500",
+    //   bg: "bg-pink-50 dark:bg-pink-950/30",
     // },
   ];
 
@@ -134,61 +134,6 @@ export default async function AdminDashboard() {
             </Card>
           ))}
         </div>
-
-        {/* Recent Users */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Recent Users</CardTitle>
-            <CardDescription>Latest user registrations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No users yet
-                </p>
-              ) : (
-                recentUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-medium text-primary">
-                          {user.firstName[0]}
-                          {user.lastName[0]}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          user.isActive
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {user.isActive ? "Active" : "Inactive"}
-                      </span>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card> */}
       </div>
     </AdminLayout>
   );
