@@ -25,7 +25,7 @@ export function Pagination({
   // Generate page numbers to display
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
-    
+
     if (totalPages <= 7) {
       // Show all pages if 7 or fewer
       for (let i = 1; i <= totalPages; i++) {
@@ -34,31 +34,31 @@ export function Pagination({
     } else {
       // Always show first page
       pages.push(1);
-      
+
       if (currentPage > 4) {
         pages.push("...");
       }
-      
+
       // Show pages around current page
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       for (let i = start; i <= end; i++) {
         if (!pages.includes(i)) {
           pages.push(i);
         }
       }
-      
+
       if (currentPage < totalPages - 3) {
         pages.push("...");
       }
-      
+
       // Always show last page (if not already included)
       if (!pages.includes(totalPages)) {
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -104,7 +104,7 @@ export function Pagination({
                 variant={currentPage === page ? "default" : "outline"}
                 size="sm"
                 onClick={() => onPageChange(page as number)}
-                className="h-9 min-w-[36px] px-3"
+                className="h-9 min-w-9 px-3"
               >
                 {page}
               </Button>
