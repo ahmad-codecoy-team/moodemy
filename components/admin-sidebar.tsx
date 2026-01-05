@@ -193,7 +193,26 @@ export function AdminSidebar() {
                 </>
               )}
             </Button>
-            <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-destructive hover:text-destructive"
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                  });
+                  
+                  if (response.ok) {
+                    // Redirect to login or home page after successful logout
+                    window.location.href = '/';
+                  } else {
+                    console.error('Logout failed');
+                  }
+                } catch (error) {
+                  console.error('Logout error:', error);
+                }
+              }}
+            >
               <LogOut className="h-5 w-5 mr-3" />
               Logout
             </Button>
