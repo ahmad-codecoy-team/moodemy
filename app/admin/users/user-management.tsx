@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Search, UserCheck, UserX } from "lucide-react";
 import type { CombinedUser } from "@/types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 interface PaginationInfo {
@@ -28,25 +28,35 @@ export function UserManagement({
   pagination,
 }: UserManagementProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchTerm);
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) {
-      params.set("search", searchQuery.trim());
-    }
-    // Reset to page 1 when searching
-    params.set("page", "1");
-    router.push(`/admin/users?${params.toString()}`);
-  };
+  // Debounced instant search
+  useEffect(() => {
+    // Only trigger navigation if searchQuery is different from URL searchTerm
+    if (searchQuery === searchTerm) return;
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      
+      if (searchQuery.trim()) {
+        params.set("search", searchQuery.trim());
+      } else {
+        params.delete("search");
+      }
+      
+      // Reset to page 1 when search changes
+      params.set("page", "1");
+      
+      router.push(`/admin/users?${params.toString()}`);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handlePageChange = (page: number) => {
-    const params = new URLSearchParams();
-    if (searchTerm) {
-      params.set("search", searchTerm);
-    }
+    const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
     router.push(`/admin/users?${params.toString()}`);
   };
@@ -82,7 +92,7 @@ export function UserManagement({
   return (
     <div className="space-y-6">
       {/* Search */}
-      <form onSubmit={handleSearch} className="flex gap-4">
+      <div className="flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -92,123 +102,123 @@ export function UserManagement({
             className="pl-10"
           />
         </div>
-        <Button type="submit" variant="outline">
-          Search
-        </Button>
         {searchTerm && (
           <Button
             type="button"
             variant="ghost"
             onClick={() => {
               setSearchQuery("");
-              router.push("/admin/users?page=1");
             }}
           >
             Clear
           </Button>
         )}
-      </form>
+      </div>
 
       {/* Users Table */}
-      <div className="border rounded-lg">
-        <table className="w-full">
-          <thead className="border-b bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="text-left p-4 font-medium">User</th>
-              <th className="text-left p-4 font-medium">Email</th>
-              <th className="text-left p-4 font-medium">Role</th>
-              <th className="text-left p-4 font-medium">Status</th>
-              <th className="text-left p-4 font-medium">Created</th>
-              <th className="text-left p-4 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 ? (
+      <div className="border rounded-lg overflow-hidden">
+        <div className="max-h-[600px] overflow-auto">
+          <table className="w-full min-w-max">
+            <thead className="border-b bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
               <tr>
-                <td colSpan={6} className="p-8 text-center text-gray-500">
-                  {searchTerm
-                    ? `No users found matching "${searchTerm}"`
-                    : "No users found"}
-                </td>
+                <th className="text-left p-4 font-medium whitespace-nowrap">User</th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">Email</th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">Role</th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">Status</th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">Created</th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">Actions</th>
               </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.uid} className="border-b">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-medium text-primary">
-                          {user.firstName?.[0] || user.email?.[0] || '?'}
-                          {user.lastName?.[0] || ''}
-                        </span>
-                      </div>
-                      <span className="font-medium">
-                        {user.fullName || `${user.firstName} ${user.lastName}`.trim() || user.email}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-gray-600">{user.email}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        user.role === "ADMIN"
-                          ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                          : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        user.isActive
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      }`}
-                    >
-                      {user.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    {user.profileCreatedAt 
-                      ? new Date(user.profileCreatedAt).toLocaleDateString()
-                      : user.authData?.metadata?.creationTime 
-                        ? new Date(user.authData.metadata.creationTime).toLocaleDateString()
-                        : 'N/A'
-                    }
-                  </td>
-                  <td className="p-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggleUserStatus(user)}
-                      disabled={loadingStates[user.uid] || false}
-                      className={`flex items-center gap-2 ${
-                        user.isActive
-                          ? "text-red-600 hover:text-red-700 hover:border-red-300"
-                          : "text-green-600 hover:text-green-700 hover:border-green-300"
-                      }`}
-                    >
-                      {loadingStates[user.uid] ? (
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      ) : user.isActive ? (
-                        <UserX className="w-4 h-4" />
-                      ) : (
-                        <UserCheck className="w-4 h-4" />
-                      )}
-                      {loadingStates[user.uid]
-                        ? "Processing..."
-                        : user.isActive
-                        ? "Suspend"
-                        : "Activate"}
-                    </Button>
+            </thead>
+            <tbody>
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                    {searchTerm
+                      ? `No users found matching "${searchTerm}"`
+                      : "No users found"}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                users.map((user) => (
+                  <tr key={user.uid} className="border-b">
+                    <td className="p-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-medium text-primary">
+                            {user.firstName?.[0] || user.email?.[0] || '?'}
+                            {user.lastName?.[0] || ''}
+                          </span>
+                        </div>
+                        <span className="font-medium">
+                          {user.fullName || `${user.firstName} ${user.lastName}`.trim() || user.email}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-gray-600 whitespace-nowrap">
+                      {user.email}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
+                          user.role === "ADMIN"
+                            ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          user.isActive
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {user.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm whitespace-nowrap">
+                      {user.profileCreatedAt 
+                        ? new Date(user.profileCreatedAt).toLocaleDateString()
+                        : user.authData?.metadata?.creationTime 
+                          ? new Date(user.authData.metadata.creationTime).toLocaleDateString()
+                          : 'N/A'
+                      }
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleUserStatus(user)}
+                        disabled={loadingStates[user.uid] || false}
+                        className={`flex items-center gap-2 ${
+                          user.isActive
+                            ? "text-red-600 hover:text-red-700 hover:border-red-300"
+                            : "text-green-600 hover:text-green-700 hover:border-green-300"
+                        }`}
+                      >
+                        {loadingStates[user.uid] ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : user.isActive ? (
+                          <UserX className="w-4 h-4" />
+                        ) : (
+                          <UserCheck className="w-4 h-4" />
+                        )}
+                        {loadingStates[user.uid]
+                          ? "Processing..."
+                          : user.isActive
+                          ? "Suspend"
+                          : "Activate"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}

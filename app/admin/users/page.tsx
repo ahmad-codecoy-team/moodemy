@@ -16,7 +16,7 @@ import { UserManagement } from "./user-management";
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { search?: string; page?: string };
+  searchParams: Promise<{ search?: string; page?: string }>;
 }) {
   // Verify user is authenticated and is admin
   const session = await getServerSession();
@@ -24,6 +24,9 @@ export default async function UsersPage({
   if (!session || session.user.role !== "ADMIN") {
     throw new Error("Unauthorized access");
   }
+
+  // Await searchParams (Next.js 15+ requirement)
+  const params = await searchParams;
 
   // Fetch users from Firebase Auth
   const usersData = await FirebaseAuthService.listUsers(1000);
@@ -37,7 +40,7 @@ export default async function UsersPage({
   users = users.filter((user) => user.role !== "ADMIN");
 
   // Apply search filter if provided
-  const searchTerm = searchParams.search?.toLowerCase();
+  const searchTerm = params.search?.toLowerCase();
   if (searchTerm) {
     users = users.filter(
       (user) =>
@@ -49,8 +52,8 @@ export default async function UsersPage({
   }
 
   // Pagination setup
-  const currentPage = parseInt(searchParams.page || "1", 10);
-  const itemsPerPage = 5;
+  const currentPage = parseInt(params.page || "1", 10);
+  const itemsPerPage = 100;
   const totalUsers = users.length;
   const totalPages = Math.ceil(totalUsers / itemsPerPage);
 
@@ -119,7 +122,7 @@ export default async function UsersPage({
           <CardContent>
             <UserManagement
               users={paginatedUsers}
-              searchTerm={searchParams.search}
+              searchTerm={params.search}
               pagination={{
                 currentPage,
                 totalPages,
