@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Home,
   Sparkles,
+  Brain,
   UserPlus,
   LogIn,
 } from "lucide-react";
@@ -38,6 +39,11 @@ const navigation = [
         name: "Splash Screen",
         href: "/admin/content/splash-screen",
         icon: Sparkles,
+      },
+      {
+        name: "Words of Wisdom",
+        href: "/admin/content/words-of-wisdom",
+        icon: Brain,
       },
       {
         name: "Signup Message",
