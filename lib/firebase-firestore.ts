@@ -9,7 +9,6 @@ import type {
   CombinedUser,
 } from "@/types";
 
-
 export class FirebaseFirestoreService {
   private static db = firestore;
 
@@ -71,6 +70,7 @@ export class FirebaseFirestoreService {
       } as Content;
     } catch (error) {
       console.error("Error getting content by doc name:", error);
+
       throw error;
     }
   }
@@ -327,37 +327,37 @@ export class FirebaseFirestoreService {
       const combinedUsers = authUsers
         .filter((authUser) => authUser.uid || authUser.id) // Ensure we have a valid identifier
         .map((authUser) => {
-        const uid = authUser.uid || authUser.id;
-        const profile = profilesMap.get(uid);
+          const uid = authUser.uid || authUser.id;
+          const profile = profilesMap.get(uid);
 
-        const result = {
-          // Auth data (includes disabled status, etc.)
-          uid: uid,
-          email: authUser.email,
-          disabled: authUser.disabled || false,
-          emailVerified: authUser.emailVerified || false,
+          const result = {
+            // Auth data (includes disabled status, etc.)
+            uid: uid,
+            email: authUser.email,
+            disabled: authUser.disabled || false,
+            emailVerified: authUser.emailVerified || false,
 
-          // Auth custom claims
-          role: authUser.role || "USER",
+            // Auth custom claims
+            role: authUser.role || "USER",
 
-          // Firestore data (takes precedence for names)
-          firstName: profile?.firstName || authUser.firstName || "",
-          lastName: profile?.lastName || authUser.lastName || "",
-          profileCreatedAt: profile?.createdAt || undefined,
+            // Firestore data (takes precedence for names)
+            firstName: profile?.firstName || authUser.firstName || "",
+            lastName: profile?.lastName || authUser.lastName || "",
+            profileCreatedAt: profile?.createdAt || undefined,
 
-          // Computed fields
-          isActive: !(authUser.disabled || false),
-          fullName: `${profile?.firstName || authUser.firstName || ""} ${
-            profile?.lastName || authUser.lastName || ""
-          }`.trim(),
+            // Computed fields
+            isActive: !(authUser.disabled || false),
+            fullName: `${profile?.firstName || authUser.firstName || ""} ${
+              profile?.lastName || authUser.lastName || ""
+            }`.trim(),
 
-          // Keep original auth data for reference
-          authData: authUser,
-          profileData: profile || null,
-        };
-        
-        return result;
-      });
+            // Keep original auth data for reference
+            authData: authUser,
+            profileData: profile || null,
+          };
+
+          return result;
+        });
 
       return combinedUsers;
     } catch (error) {

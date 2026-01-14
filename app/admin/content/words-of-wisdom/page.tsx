@@ -14,7 +14,6 @@ export default async function WordsOfWisdomPage() {
   // Fetch words of wisdom content from Firebase
   const wordsOfWisdomContent =
     await FirebaseFirestoreService.getContentByDocName("words_of_wisdom");
-  console.log("Content from words of wisdom page--->", wordsOfWisdomContent);
 
   return (
     <AdminLayout>

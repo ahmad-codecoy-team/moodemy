@@ -156,7 +156,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h2 className="text-3xl font-bold text-sidebar-foreground mb-2">
-              Smart Shopping Admin Dashboard
+              MoodyMe Admin Dashboard
             </h2>
             <p className="text-sidebar-foreground/60 text-lg">
               Manage your MoodyMe application

@@ -30,7 +30,9 @@ export function UserManagement({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchTerm);
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Debounced instant search
   useEffect(() => {
@@ -39,16 +41,16 @@ export function UserManagement({
 
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
-      
+
       if (searchQuery.trim()) {
         params.set("search", searchQuery.trim());
       } else {
         params.delete("search");
       }
-      
+
       // Reset to page 1 when search changes
       params.set("page", "1");
-      
+
       router.push(`/admin/users?${params.toString()}`);
     }, 300); // 300ms debounce
 
@@ -64,9 +66,9 @@ export function UserManagement({
   const handleToggleUserStatus = async (user: CombinedUser) => {
     const newStatus = !user.isActive;
     const action = newStatus ? "activate" : "suspend";
-    
+
     // Set loading state
-    setLoadingStates(prev => ({ ...prev, [user.uid]: true }));
+    setLoadingStates((prev) => ({ ...prev, [user.uid]: true }));
 
     try {
       // Import and use the server action
@@ -85,7 +87,7 @@ export function UserManagement({
       toast.error(`Failed to ${action} user`);
     } finally {
       // Clear loading state
-      setLoadingStates(prev => ({ ...prev, [user.uid]: false }));
+      setLoadingStates((prev) => ({ ...prev, [user.uid]: false }));
     }
   };
 
@@ -117,16 +119,28 @@ export function UserManagement({
 
       {/* Users Table */}
       <div className="border rounded-lg overflow-hidden">
-        <div className="max-h-[600px] overflow-auto">
+        <div className="max-h-150 overflow-auto">
           <table className="w-full min-w-max">
             <thead className="border-b bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
               <tr>
-                <th className="text-left p-4 font-medium whitespace-nowrap">User</th>
-                <th className="text-left p-4 font-medium whitespace-nowrap">Email</th>
-                <th className="text-left p-4 font-medium whitespace-nowrap">Role</th>
-                <th className="text-left p-4 font-medium whitespace-nowrap">Status</th>
-                <th className="text-left p-4 font-medium whitespace-nowrap">Created</th>
-                <th className="text-left p-4 font-medium whitespace-nowrap">Actions</th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
+                  User
+                </th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
+                  Email
+                </th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
+                  Role
+                </th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
+                  Status
+                </th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
+                  Created
+                </th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -143,14 +157,16 @@ export function UserManagement({
                   <tr key={user.uid} className="border-b">
                     <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <span className="text-sm font-medium text-primary">
-                            {user.firstName?.[0] || user.email?.[0] || '?'}
-                            {user.lastName?.[0] || ''}
+                            {user.firstName?.[0] || user.email?.[0] || "?"}
+                            {user.lastName?.[0] || ""}
                           </span>
                         </div>
                         <span className="font-medium">
-                          {user.fullName || `${user.firstName} ${user.lastName}`.trim() || user.email}
+                          {user.fullName ||
+                            `${user.firstName} ${user.lastName}`.trim() ||
+                            user.email}
                         </span>
                       </div>
                     </td>
@@ -180,12 +196,13 @@ export function UserManagement({
                       </span>
                     </td>
                     <td className="p-4 text-gray-600 text-sm whitespace-nowrap">
-                      {user.profileCreatedAt 
+                      {user.profileCreatedAt
                         ? new Date(user.profileCreatedAt).toLocaleDateString()
-                        : user.authData?.metadata?.creationTime 
-                          ? new Date(user.authData.metadata.creationTime).toLocaleDateString()
-                          : 'N/A'
-                      }
+                        : user.authData?.metadata?.creationTime
+                        ? new Date(
+                            user.authData.metadata.creationTime
+                          ).toLocaleDateString()
+                        : "N/A"}
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       <Button
