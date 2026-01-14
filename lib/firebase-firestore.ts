@@ -344,6 +344,8 @@ export class FirebaseFirestoreService {
             firstName: profile?.firstName || authUser.firstName || "",
             lastName: profile?.lastName || authUser.lastName || "",
             profileCreatedAt: profile?.createdAt || undefined,
+            // Email permission: true only if explicitly set to true, false otherwise (including when field doesn't exist)
+            allowEmailSent: profile?.allowEmailSent === true ? true : false,
 
             // Computed fields
             isActive: !(authUser.disabled || false),

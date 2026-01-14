@@ -130,6 +130,9 @@ export function UserManagement({
                   Email
                 </th>
                 <th className="text-left p-4 font-medium whitespace-nowrap">
+                  Can Email
+                </th>
+                <th className="text-left p-4 font-medium whitespace-nowrap">
                   Role
                 </th>
                 <th className="text-left p-4 font-medium whitespace-nowrap">
@@ -146,7 +149,7 @@ export function UserManagement({
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
                     {searchTerm
                       ? `No users found matching "${searchTerm}"`
                       : "No users found"}
@@ -172,6 +175,17 @@ export function UserManagement({
                     </td>
                     <td className="p-4 text-gray-600 whitespace-nowrap">
                       {user.email}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          user.allowEmailSent
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {user.allowEmailSent ? "Yes" : "No"}
+                      </span>
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       <span

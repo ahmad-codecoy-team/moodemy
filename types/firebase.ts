@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string;
   firstName: string;
   lastName: string;
+  allowEmailSent?: boolean; // Optional since old users may not have this field
   createdAt: string;
 }
 
@@ -23,6 +24,7 @@ export interface CombinedUser {
   firstName: string;
   lastName: string;
   profileCreatedAt?: string;
+  allowEmailSent: boolean; // Email permission from Firestore
   
   // Computed fields
   isActive: boolean; // derived from !disabled
